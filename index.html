@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Attendance Tracker | College Student Attendance Dashboard</title>
+    <!-- Meta Description for SEO -->
+    <meta name="description" content="Personal Attendance Tracker Website for college students to manage subjects, track daily attendance, monitor percentage goals, view calendar logs, manage holidays, and export reports.">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ================= 0. USER LOGIN & REGISTRATION OVERLAY ================= -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card">
+            
+            <!-- Auth Nav Tabs Switcher -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" id="tabSignInBtn">Sign In</button>
+                <button type="button" class="auth-tab-btn" id="tabRegisterBtn">Create Account</button>
+            </div>
+
+            <!-- Header -->
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                    <div class="logo-text">
+                        <span class="app-title">Attendance</span>
+                        <span class="app-subtitle">Tracker</span>
+                    </div>
+                </div>
+                <h2 id="authFormTitle">Student Sign In</h2>
+                <p class="text-muted text-sm" id="authFormSubtitle">Access your saved attendance tracker and subject stats.</p>
+            </div>
+
+            <!-- Form 1: Sign In Form -->
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginNameInput"><i class="fa-solid fa-user"></i> Email / Student Name <span class="text-danger">*</span></label>
+                    <input type="text" id="loginNameInput" class="form-control" placeholder="Enter name or email" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPinInput"><i class="fa-solid fa-lock"></i> Password / Security PIN</label>
+                    <input type="password" id="loginPinInput" class="form-control" placeholder="Enter 4-digit PIN or password">
+                </div>
+                <div class="auth-buttons">
+                    <button type="submit" class="btn btn-primary btn-lg w-full">
+                        <i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard
+                    </button>
+                    <button type="button" class="btn btn-secondary w-full" id="demoLoginBtn">
+                        <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> Quick Demo Guest Login
+                    </button>
+                </div>
+                <div class="text-center mt-4">
+                    <span class="text-muted text-sm">Don't have an account? <a href="#" id="linkToRegister" class="text-primary font-bold">Register Now</a></span>
+                </div>
+            </form>
+
+            <!-- Form 2: Register New User Form -->
+            <form id="registerForm" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label for="regNameInput"><i class="fa-solid fa-user"></i> Full Name <span class="text-danger">*</span></label>
+                    <input type="text" id="regNameInput" class="form-control" placeholder="e.g. Rahul Sharma" required>
+                </div>
+                <div class="form-group">
+                    <label for="regEmailInput"><i class="fa-solid fa-envelope"></i> Email Address <span class="text-danger">*</span></label>
+                    <input type="email" id="regEmailInput" class="form-control" placeholder="e.g. rahul@college.edu" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="regRollInput"><i class="fa-solid fa-id-card"></i> Roll Number</label>
+                        <input type="text" id="regRollInput" class="form-control" placeholder="CSE-2026-042">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="regBranchInput"><i class="fa-solid fa-building-columns"></i> Branch</label>
+                        <input type="text" id="regBranchInput" class="form-control" placeholder="Diploma CSE" value="Diploma CSE">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="regPinInput"><i class="fa-solid fa-lock"></i> Security PIN <span class="text-danger">*</span></label>
+                        <input type="password" id="regPinInput" class="form-control" placeholder="4-digit PIN" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="regTargetInput"><i class="fa-solid fa-bullseye"></i> Target Goal %</label>
+                        <input type="number" id="regTargetInput" class="form-control" value="75" min="50" max="100">
+                    </div>
+                </div>
+                <div class="auth-buttons">
+                    <button type="submit" class="btn btn-success btn-lg w-full">
+                        <i class="fa-solid fa-user-plus"></i> Register & Create Account
+                    </button>
+                </div>
+                <div class="text-center mt-4">
+                    <span class="text-muted text-sm">Already have an account? <a href="#" id="linkToSignIn" class="text-primary font-bold">Sign In Here</a></span>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+
+    <!-- App Container -->
+    <div class="app-layout" id="appLayout">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                    <div class="logo-text">
+                        <span class="app-title">Attendance</span>
+                        <span class="app-subtitle">Tracker</span>
+                    </div>
+                </div>
+                <button class="icon-btn mobile-close-btn" id="closeSidebarBtn" aria-label="Close Navigation Sidebar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#mark-attendance" class="nav-item" data-tab="mark-attendance">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Mark Attendance</span>
+                </a>
+                <a href="#subjects" class="nav-item" data-tab="subjects">
+                    <i class="fa-solid fa-book-bookmark"></i>
+                    <span>Subjects</span>
+                </a>
+                <a href="#calendar" class="nav-item" data-tab="calendar">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Calendar View</span>
+                </a>
+                <a href="#holidays" class="nav-item" data-tab="holidays">
+                    <i class="fa-solid fa-umbrella-beach"></i>
+                    <span>Holidays</span>
+                </a>
+                <a href="#history" class="nav-item" data-tab="history">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Attendance Log</span>
+                </a>
+                <a href="#reports" class="nav-item" data-tab="reports">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Analytics & Reports</span>
+                </a>
+                <a href="#settings" class="nav-item" data-tab="settings">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Settings & Backup</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="student-profile">
+                    <div class="avatar" id="avatarDisplay">CS</div>
+                    <div class="profile-info">
+                        <span class="profile-name" id="profileNameDisplay">College Student</span>
+                        <span class="profile-role" id="profileRoleDisplay">Diploma CSE</span>
+                    </div>
+                    <button class="icon-btn text-danger logout-btn" id="logoutBtn" title="Logout Student">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header Bar -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="icon-btn mobile-hamburger" id="openSidebarBtn" aria-label="Open Sidebar Menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="page-title-group">
+                        <h1 id="pageTitle">Dashboard</h1>
+                        <p id="pageSubtitle" class="page-subtitle">Overview of your academic attendance performance</p>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Current Date Badge -->
+                    <div class="current-date-badge" id="currentDateBadge">
+                        <i class="fa-regular fa-calendar"></i>
+                        <span id="headerDateText">Fri, 02 Oct 2026</span>
+                    </div>
+
+                    <!-- Theme Toggle Button -->
+                    <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+                        <i class="fa-solid fa-moon" id="themeIcon"></i>
+                        <span class="theme-label" id="themeLabel">Dark Mode</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Content Containers (Tab Views) -->
+            <div class="content-body">
+                
+                <!-- ================= 1. DASHBOARD VIEW ================= -->
+                <section id="tab-dashboard" class="tab-page active">
+                    
+                    <!-- Goal Warning Banner -->
+                    <div class="status-banner" id="goalWarningBanner">
+                        <div class="banner-icon" id="bannerIcon">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div class="banner-content">
+                            <h3 id="bannerTitle">Attendance Alert</h3>
+                            <p id="bannerMessage">Calculating attendance status...</p>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="bannerActionBtn">Adjust Target</button>
+                    </div>
+
+                    <!-- Dashboard Stats Grid -->
+                    <div class="stats-grid">
+                        <!-- Overall Attendance Ring Card -->
+                        <div class="stat-card primary-stat">
+                            <div class="stat-card-header">
+                                <h3>Overall Attendance</h3>
+                                <span class="badge" id="overallBadge">Safe</span>
+                            </div>
+                            <div class="stat-card-body ring-body">
+                                <div class="progress-ring-container">
+                                    <svg class="progress-ring" width="140" height="140">
+                                        <circle class="progress-ring-bg" stroke-width="12" cx="70" cy="70" r="56" />
+                                        <circle class="progress-ring-fill" id="overallProgressRing" stroke-width="12" cx="70" cy="70" r="56" />
+                                    </svg>
+                                    <div class="ring-text">
+                                        <span class="percentage-val" id="overallPercentage">0.0%</span>
+                                        <span class="percentage-sub">Average</span>
+                                    </div>
+                                </div>
+                                <div class="target-comparison">
+                                    <span>Target: <strong id="targetPercentageDisplay">75%</strong></span>
+                                    <span class="target-diff" id="targetDiffText">On Track</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Total Classes Card -->
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper icon-blue">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Total Conducted</span>
+                                <h2 class="stat-value" id="totalClassesVal">0</h2>
+                                <span class="stat-subtext">Across all subjects</span>
+                            </div>
+                        </div>
+
+                        <!-- Classes Attended Card -->
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper icon-green">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Attended Classes</span>
+                                <h2 class="stat-value text-success" id="attendedClassesVal">0</h2>
+                                <span class="stat-subtext">Successfully present</span>
+                            </div>
+                        </div>
+
+                        <!-- Classes Missed Card -->
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper icon-red">
+                                <i class="fa-solid fa-user-xmark"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Classes Missed</span>
+                                <h2 class="stat-value text-danger" id="missedClassesVal">0</h2>
+                                <span class="stat-subtext">Absences logged</span>
+                            </div>
+                        </div>
+
+                        <!-- Total Subjects Card -->
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper icon-purple">
+                                <i class="fa-solid fa-book-open"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Total Subjects</span>
+                                <h2 class="stat-value" id="totalSubjectsVal">0</h2>
+                                <span class="stat-subtext">Enrolled courses</span>
+                            </div>
+                        </div>
+
+                        <!-- Current Month Summary Card -->
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper icon-orange">
+                                <i class="fa-solid fa-calendar-day"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Current Month</span>
+                                <h2 class="stat-value" id="currentMonthPctVal">0.0%</h2>
+                                <span class="stat-subtext" id="currentMonthNameLabel">October 2026</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Attendance & Subject Breakdown Row -->
+                    <div class="dashboard-sections-grid">
+                        
+                        <!-- Quick Mark Attendance Card -->
+                        <div class="card dashboard-card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <i class="fa-solid fa-bolt text-primary"></i>
+                                    <h3>Quick Daily Attendance</h3>
+                                </div>
+                                <span class="text-muted text-sm">Mark attendance for today</span>
+                            </div>
+                            <div class="card-body">
+                                <form id="quickAttendanceForm" class="quick-form">
+                                    <div class="form-row">
+                                        <div class="form-group flex-1">
+                                            <label for="quickDate">Select Date</label>
+                                            <input type="date" id="quickDate" class="form-control" required>
+                                        </div>
+                                        <div class="form-group flex-2">
+                                            <label for="quickSubject">Select Subject</label>
+                                            <select id="quickSubject" class="form-control" required>
+                                                <option value="">-- Choose Subject --</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="quick-btn-group">
+                                        <button type="button" class="btn btn-success btn-lg flex-1" id="quickPresentBtn">
+                                            <i class="fa-solid fa-circle-check"></i> ✅ Present
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-lg flex-1" id="quickAbsentBtn">
+                                            <i class="fa-solid fa-circle-xmark"></i> ❌ Absent
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Goal Simulator Summary Card -->
+                        <div class="card dashboard-card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <i class="fa-solid fa-bullseye text-warning"></i>
+                                    <h3>Target Goal Analysis</h3>
+                                </div>
+                                <a href="#settings" class="link-btn" data-tab="settings">Change Goal</a>
+                            </div>
+                            <div class="card-body">
+                                <div class="goal-analysis-box" id="goalAnalysisBox">
+                                    <div class="goal-metric">
+                                        <div class="goal-metric-item">
+                                            <span class="label">Current Status</span>
+                                            <span class="val text-bold" id="goalCurrentStatus">82.5%</span>
+                                        </div>
+                                        <div class="goal-metric-item">
+                                            <span class="label">Target Threshold</span>
+                                            <span class="val text-bold" id="goalTargetVal">75%</span>
+                                        </div>
+                                    </div>
+                                    <div class="goal-advice-card" id="goalAdviceCard">
+                                        <i class="fa-solid fa-lightbulb advice-icon"></i>
+                                        <p id="goalAdviceText">Loading attendance target calculation...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Subject Summary Grid View -->
+                    <div class="section-header-row">
+                        <h2>Subject-wise Overview</h2>
+                        <a href="#subjects" class="btn btn-secondary btn-sm" data-tab="subjects">
+                            <i class="fa-solid fa-gear"></i> Manage Subjects
+                        </a>
+                    </div>
+                    <div class="subjects-overview-grid" id="dashboardSubjectsGrid">
+                        <!-- Dynamic subject cards render here -->
+                    </div>
+
+                </section>
+
+
+                <!-- ================= 2. MARK ATTENDANCE VIEW ================= -->
+                <section id="tab-mark-attendance" class="tab-page">
+                    <div class="card max-w-2xl margin-auto">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <i class="fa-solid fa-calendar-check text-primary"></i>
+                                <h3>Record Class Attendance</h3>
+                            </div>
+                            <p class="text-muted text-sm">Select date, subject, and mark whether you were Present or Absent.</p>
+                        </div>
+                        <div class="card-body">
+                            <form id="markAttendanceForm">
+                                <div class="form-group">
+                                    <label for="markDate"><i class="fa-regular fa-calendar-days"></i> Attendance Date</label>
+                                    <input type="date" id="markDate" class="form-control form-control-lg" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="markSubjectSelect"><i class="fa-solid fa-book"></i> Subject Name / Code</label>
+                                    <select id="markSubjectSelect" class="form-control form-control-lg" required>
+                                        <option value="">-- Select Subject --</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-user-check"></i> Attendance Status</label>
+                                    <div class="attendance-action-buttons">
+                                        <button type="button" class="btn btn-attendance btn-present" id="markPresentBtn">
+                                            <i class="fa-solid fa-circle-check"></i>
+                                            <span>✅ Present</span>
+                                        </button>
+                                        <button type="button" class="btn btn-attendance btn-absent" id="markAbsentBtn">
+                                            <i class="fa-solid fa-circle-xmark"></i>
+                                            <span>❌ Absent</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Recent Entries Log preview -->
+                    <div class="card max-w-2xl margin-auto mt-6">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                <h3>Recently Marked Attendance</h3>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="custom-table" id="recentAttendanceTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Subject</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentAttendanceBody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ================= 3. SUBJECTS MANAGEMENT VIEW ================= -->
+                <section id="tab-subjects" class="tab-page">
+                    <div class="section-header-row">
+                        <div>
+                            <h2>Subject Management</h2>
+                            <p class="text-muted text-sm">Add, edit, or remove your academic subjects</p>
+                        </div>
+                        <button class="btn btn-primary" id="openAddSubjectModalBtn">
+                            <i class="fa-solid fa-plus"></i> Add New Subject
+                        </button>
+                    </div>
+
+                    <!-- Subject Cards Container -->
+                    <div class="subjects-full-grid" id="subjectsContainer">
+                        <!-- Rendered dynamically -->
+                    </div>
+
+                    <!-- Subject-wise Table View -->
+                    <div class="card mt-8">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <i class="fa-solid fa-table-list"></i>
+                                <h3>Subject-wise Attendance Summary Table</h3>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="custom-table" id="subjectSummaryTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Subject Code</th>
+                                            <th>Subject Name</th>
+                                            <th>Faculty Name</th>
+                                            <th>Total Classes</th>
+                                            <th>Attended</th>
+                                            <th>Absent</th>
+                                            <th>Percentage</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="subjectSummaryTableBody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ================= 4. CALENDAR VIEW ================= -->
+                <section id="tab-calendar" class="tab-page">
+                    <div class="card">
+                        <div class="card-header calendar-header-controls">
+                            <div class="calendar-nav-group">
+                                <button class="btn btn-icon btn-secondary" id="calPrevMonthBtn" title="Previous Month">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <h2 id="calendarMonthTitle" class="calendar-title">October 2026</h2>
+                                <button class="btn btn-icon btn-secondary" id="calNextMonthBtn" title="Next Month">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button class="btn btn-secondary btn-sm" id="calTodayBtn">Today</button>
+                            </div>
+                            <div class="calendar-legend">
+                                <span class="legend-item"><span class="dot dot-present"></span> Present</span>
+                                <span class="legend-item"><span class="dot dot-absent"></span> Absent</span>
+                                <span class="legend-item"><span class="dot dot-holiday"></span> Holiday</span>
+                                <span class="legend-item"><span class="dot dot-empty"></span> No Record</span>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="calendar-grid-header">
+                                <div>Sun</div>
+                                <div>Mon</div>
+                                <div>Tue</div>
+                                <div>Wed</div>
+                                <div>Thu</div>
+                                <div>Fri</div>
+                                <div>Sat</div>
+                            </div>
+                            <div class="calendar-grid-days" id="calendarDaysGrid">
+                                <!-- Calendar days rendered dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ================= 5. HOLIDAYS MANAGEMENT VIEW ================= -->
+                <section id="tab-holidays" class="tab-page">
+                    <div class="section-header-row">
+                        <div>
+                            <h2>College Holidays & Vacations</h2>
+                            <p class="text-muted text-sm">Add official college holidays, Sundays, or festival breaks. Holidays do not count against your attendance!</p>
+                        </div>
+                        <button class="btn btn-primary" id="openAddHolidayModalBtn">
+                            <i class="fa-solid fa-plus"></i> Add Holiday
+                        </button>
+                    </div>
+
+                    <!-- Holidays Summary Grid Cards -->
+                    <div class="stats-grid mb-6">
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper icon-orange">
+                                <i class="fa-solid fa-umbrella-beach"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Total Holidays</span>
+                                <h2 class="stat-value" id="totalHolidaysVal">0</h2>
+                                <span class="stat-subtext">Recorded breaks</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrapper icon-green">
+                                <i class="fa-solid fa-calendar-check"></i>
+                            </div>
+                            <div class="stat-details">
+                                <span class="stat-label">Upcoming Holidays</span>
+                                <h2 class="stat-value text-success" id="upcomingHolidaysVal">0</h2>
+                                <span class="stat-subtext">Future non-class days</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Holidays Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <i class="fa-solid fa-calendar-day text-warning"></i>
+                                <h3>Declared Holidays List</h3>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="custom-table" id="holidaysTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Holiday Name</th>
+                                            <th>Type</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="holidaysTableBody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ================= 6. HISTORY & LOG VIEW ================= -->
+                <section id="tab-history" class="tab-page">
+                    <div class="card">
+                        <div class="card-header flex-col-mobile gap-4">
+                            <div class="card-header-title">
+                                <i class="fa-solid fa-list-check text-primary"></i>
+                                <h3>Attendance Log & History</h3>
+                            </div>
+                            
+                            <!-- Search & Filter Controls Bar -->
+                            <div class="filter-controls-row">
+                                <div class="form-group mb-0">
+                                    <select id="historyFilterSubject" class="form-control form-control-sm">
+                                        <option value="">All Subjects</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-0">
+                                    <input type="month" id="historyFilterMonth" class="form-control form-control-sm">
+                                </div>
+                                <div class="form-group mb-0">
+                                    <select id="historyFilterStatus" class="form-control form-control-sm">
+                                        <option value="">All Statuses</option>
+                                        <option value="present">Present Only</option>
+                                        <option value="absent">Absent Only</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-secondary btn-sm" id="resetHistoryFiltersBtn">
+                                    <i class="fa-solid fa-rotate"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="custom-table" id="historyTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Subject Code</th>
+                                            <th>Subject Name</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTableBody">
+                                        <!-- Rendered dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer table-footer-info">
+                            <span id="historyCountText">Showing 0 records</span>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ================= 7. ANALYTICS & REPORTS VIEW ================= -->
+                <section id="tab-reports" class="tab-page">
+                    <!-- Export Actions Bar -->
+                    <div class="report-actions-bar">
+                        <div class="month-selector-group">
+                            <label for="reportMonthSelect"><strong>Select Month:</strong></label>
+                            <input type="month" id="reportMonthSelect" class="form-control" value="2026-10">
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-secondary" id="exportCsvBtn">
+                                <i class="fa-solid fa-file-csv"></i> Export CSV
+                            </button>
+                            <button class="btn btn-primary" id="printReportBtn">
+                                <i class="fa-solid fa-print"></i> Print Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Stats Summary Card -->
+                    <div class="card mb-6" id="monthlySummaryReportCard">
+                        <div class="card-header">
+                            <div class="card-header-title">
+                                <i class="fa-solid fa-calendar-days text-primary"></i>
+                                <h3 id="monthlyReportTitle">October 2026 Monthly Summary</h3>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="monthly-stats-banner">
+                                <div class="monthly-stat-item">
+                                    <span class="label">Total Classes</span>
+                                    <span class="val" id="monthlyTotalClasses">0</span>
+                                </div>
+                                <div class="monthly-stat-item">
+                                    <span class="label">Attended</span>
+                                    <span class="val text-success" id="monthlyAttended">0</span>
+                                </div>
+                                <div class="monthly-stat-item">
+                                    <span class="label">Absent</span>
+                                    <span class="val text-danger" id="monthlyAbsent">0</span>
+                                </div>
+                                <div class="monthly-stat-item highlight">
+                                    <span class="label">Monthly Attendance %</span>
+                                    <span class="val" id="monthlyPercentage">0.0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid">
+                        <!-- Chart 1: Subject-wise Percentage Bar Chart -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Subject-wise Attendance %</h3>
+                            </div>
+                            <div class="card-body chart-container">
+                                <canvas id="subjectBarChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Present vs Absent Doughnut Chart -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Overall Present vs Absent</h3>
+                            </div>
+                            <div class="card-body chart-container">
+                                <canvas id="ratioDoughnutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+
+                <!-- ================= 8. SETTINGS & BACKUP VIEW ================= -->
+                <section id="tab-settings" class="tab-page">
+                    <div class="settings-grid">
+                        
+                        <!-- Target Goal Preferences -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <i class="fa-solid fa-bullseye text-primary"></i>
+                                    <h3>Attendance Goal Target</h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <form id="settingsTargetForm">
+                                    <div class="form-group">
+                                        <label for="studentNameInput">Student Name</label>
+                                        <input type="text" id="studentNameInput" class="form-control" placeholder="e.g. Rahul Sharma" value="College Student">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="studentBranchInput">Branch / Course</label>
+                                        <input type="text" id="studentBranchInput" class="form-control" placeholder="e.g. Diploma CSE" value="Diploma CSE">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="targetPercentageInput">Target Attendance Percentage (%)</label>
+                                        <input type="number" id="targetPercentageInput" class="form-control" min="1" max="100" value="75" required>
+                                        <small class="text-muted">Standard college threshold is usually 75%.</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fa-solid fa-floppy-disk"></i> Save Preferences
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Backup & Restore Data -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <i class="fa-solid fa-database text-info"></i>
+                                    <h3>Backup & Data Transfer</h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-sm text-muted mb-4">Export your attendance data as JSON file to transfer between browsers or create external backups.</p>
+                                
+                                <div class="backup-buttons">
+                                    <button class="btn btn-secondary w-full" id="exportBackupBtn">
+                                        <i class="fa-solid fa-download"></i> Export Backup JSON
+                                    </button>
+                                    
+                                    <div class="import-file-wrapper w-full">
+                                        <label for="importBackupInput" class="btn btn-outline-secondary w-full">
+                                            <i class="fa-solid fa-upload"></i> Import Backup JSON
+                                        </label>
+                                        <input type="file" id="importBackupInput" accept=".json" style="display: none;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sample Data & Reset System -->
+                        <div class="card danger-card">
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+                                    <h3>Data Reset & Demo Load</h3>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-sm text-muted mb-4">Load realistic sample subjects and attendance data for instant testing, or wipe all data to start fresh.</p>
+                                
+                                <div class="flex-col gap-3">
+                                    <button class="btn btn-secondary" id="loadSampleDataBtn">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-warning"></i> Load Sample College Data
+                                    </button>
+                                    <button class="btn btn-danger" id="clearAllDataBtn">
+                                        <i class="fa-solid fa-trash-can"></i> Clear All Data (Reset)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Add / Edit Subject Modal -->
+    <div class="modal-overlay" id="subjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="subjectModalTitle">Add New Subject</h3>
+                <button class="modal-close-btn" id="closeSubjectModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="subjectForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editSubjectId">
+                    <div class="form-group">
+                        <label for="subjectNameInput">Subject Name <span class="text-danger">*</span></label>
+                        <input type="text" id="subjectNameInput" class="form-control" placeholder="e.g. Database Management System" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subjectCodeInput">Subject Code <span class="text-danger">*</span></label>
+                        <input type="text" id="subjectCodeInput" class="form-control" placeholder="e.g. DBMS / CS301" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="facultyNameInput">Faculty Name (Optional)</label>
+                        <input type="text" id="facultyNameInput" class="form-control" placeholder="e.g. Dr. R. K. Sharma">
+                    </div>
+                    <div class="form-group">
+                        <label for="subjectColorInput">Subject Badge Color</label>
+                        <input type="color" id="subjectColorInput" class="form-control color-picker-input" value="#4f46e5">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelSubjectModalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveSubjectBtn">Save Subject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add / Edit Holiday Modal -->
+    <div class="modal-overlay" id="holidayModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="holidayModalTitle">Add Holiday</h3>
+                <button class="modal-close-btn" id="closeHolidayModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="holidayForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editHolidayId">
+                    <div class="form-group">
+                        <label for="holidayDateInput">Holiday Date <span class="text-danger">*</span></label>
+                        <input type="date" id="holidayDateInput" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="holidayNameInput">Holiday Name / Description <span class="text-danger">*</span></label>
+                        <input type="text" id="holidayNameInput" class="form-control" placeholder="e.g. Gandhi Jayanti / Diwali Break" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="holidayTypeSelect">Holiday Category</label>
+                        <select id="holidayTypeSelect" class="form-control">
+                            <option value="National Holiday">🎉 National / Official Holiday</option>
+                            <option value="Festival">🪔 Festival / Cultural Break</option>
+                            <option value="College Event">🏫 College Event / Sports Day</option>
+                            <option value="Weekend">☀️ Sunday / Weekend Break</option>
+                            <option value="Other">🌴 Other Break</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelHolidayModalBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Holiday</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Attendance Record Modal -->
+    <div class="modal-overlay" id="editAttendanceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Attendance Record</h3>
+                <button class="modal-close-btn" id="closeEditAttendanceModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="editAttendanceForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editAttendanceId">
+                    <div class="form-group">
+                        <label for="editAttDate">Date</label>
+                        <input type="date" id="editAttDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAttSubject">Subject</label>
+                        <select id="editAttSubject" class="form-control" required>
+                            <!-- Rendered dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAttStatus">Status</label>
+                        <select id="editAttStatus" class="form-control" required>
+                            <option value="present">✅ Present</option>
+                            <option value="absent">❌ Absent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancelEditAttendanceBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Day Attendance Details Modal (from Calendar click) -->
+    <div class="modal-overlay" id="dayDetailsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="dayModalTitle">Attendance for Date</h3>
+                <button class="modal-close-btn" id="closeDayDetailsModalBtn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="dayHolidayAlert" class="mb-4"></div>
+                <div class="day-records-list" id="dayRecordsList">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary btn-sm" id="dayAddEntryBtn">
+                    <i class="fa-solid fa-plus"></i> Add Entry For This Day
+                </button>
+                <button class="btn btn-secondary btn-sm" id="closeDayDetailsModalBtn2">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Main JavaScript Logic -->
+    <script src="script.js"></script>
+</body>
+</html>
